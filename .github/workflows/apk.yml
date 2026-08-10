@@ -135,6 +135,7 @@ jobs:
           bash .github/scripts/validate-plugin-apks.sh "$AAPT2" "$plugin_apk" "$trace_apk"
 
       - name: Verify signed APKs
+        if: env.SIGNING_STORE_PASSWORD != ''
         run: |
           APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
           mapfile -t APKS < <(printf '%s\n' \
@@ -154,6 +155,20 @@ jobs:
             fi
             "$APKSIGNER" verify --verbose "$APK"
           done
+
+      - name: Verify unsigned APKs exist
+        if: env.SIGNING_STORE_PASSWORD == ''
+        run: |
+          mapfile -t APKS < <(printf '%s\n' \
+            "android-plugin/app/build/outputs/apk/plugin/release/MobileGL-plugin-release-${GITHUB_SHA}.apk" \
+            "android-plugin/app/build/outputs/apk/trace/release/MobileGL-plugin-trace-release-${GITHUB_SHA}.apk")
+          for APK in "${APKS[@]}"; do
+            if [[ ! -f "$APK" ]]; then
+              echo "::error::Expected release APK was not produced: $APK"
+              exit 1
+            fi
+          done
+          echo "Unsigned APKs verified (no signing secrets configured)"
 
       - name: Upload plugin APK
         uses: actions/upload-artifact@v7
