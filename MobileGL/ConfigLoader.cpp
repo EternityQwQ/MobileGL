@@ -185,6 +185,8 @@ namespace MobileGL::MG_ConfigLoader {
         features.AsyncShaderCompileThreads = QueryEnvUint32("MOBILEGL_ASYNC_SHADER_COMPILE_THREADS", 0, 0, 64);
         features.AsyncOptimisticShaderStatus =
             QueryEnvQuirkOverride("MOBILEGL_ASYNC_OPTIMISTIC_SHADER_STATUS");
+        features.EnableCustomVulkanIcd = QueryEnvFlag("MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD");
+        QueryEnvVariable("MOBILEGL_VULKAN_ICD_PATH", features.VulkanIcdPath, "");
     }
 
     inline void InitBackendType() {

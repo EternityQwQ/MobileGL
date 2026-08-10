@@ -149,6 +149,13 @@ namespace MobileGL::MG_Config {
         // immediately stay serial by their own construction). Off by default; never
         // advertise it.
         QuirkOverride AsyncOptimisticShaderStatus = QuirkOverride::Auto;
+        // MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD: enable custom Vulkan ICD loading via
+        // MOBILEGL_VULKAN_ICD_PATH. 1=enabled, 0=disabled (default).
+        Bool EnableCustomVulkanIcd = false;
+        // MOBILEGL_VULKAN_ICD_PATH: path to Vulkan ICD JSON manifest or .so file
+        // (e.g., libvulkan_freedreno.so for Turnip driver). Only used when
+        // MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD=1.
+        String VulkanIcdPath;
     };
     extern FeaturesTable Features;
 } // namespace MobileGL::MG_Config

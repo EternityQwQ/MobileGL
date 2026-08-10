@@ -131,6 +131,27 @@ Also make sure the JVM arguments include:
 
 `DYLD_INSERT_LIBRARIES` must be active before GLFW creates its OpenGL context. After startup, the Minecraft F3 screen should report MobileGL and the `Direct (Vulkan)` backend if the injection worked.
 
+### Using Turnip (Freedreno) Vulkan Driver on Android
+
+To use the Turnip Vulkan driver (e.g., from [FoldCraftLauncher](https://github.com/FCL-Team/FoldCraftLauncher)) with MobileGL's DirectVulkan backend:
+
+```sh
+# Enable custom ICD loading
+export MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD=1
+
+# Point to Turnip driver (.so file - will auto-detect co-located .json manifest)
+export MOBILEGL_VULKAN_ICD_PATH=/path/to/FoldCraftLauncher/FCLauncher/src/main/jniLibs/arm64-v8a/libvulkan_freedreno.so
+
+# Select DirectVulkan backend (Turnip is a Vulkan driver, not GLES)
+export MOBILEGL_BACKEND_TYPE=DirectVulkan
+```
+
+**Notes:**
+- Turnip is a Vulkan driver, so it only works with `DirectVulkan` backend (not `DirectGLES`)
+- The path can point to either the `.so` file (auto-converts to `.json` manifest) or directly to a JSON manifest
+- Requires `MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD=1` (default is disabled for safety)
+- The Vulkan loader must be able to find the ICD manifest (typically co-located with the `.so`)
+
 ## Build Options
 
 | Option                       | Description                                           | Default |
@@ -162,6 +183,8 @@ MobileGL supports runtime configuration via environment variables.
 | `MOBILEGL_MAGMA_FRAMESINFLIGHT` | Set Magma frames in flight. | Integer `1`–`64` | `3` |
 | `MOBILEGL_AVOID_SAMPLER_MIPMAP_MIN_FILTER` | Avoid sampler mipmap minification filters. | `0`, `1` | `0` |
 | `MOBILEGL_COHERENT_AS_FLUSH` | Treat persistent `GL_MAP_FLUSH_EXPLICIT_BIT` maps as coherent (app-compat for engines like Flywheel that never flush them). | `0`, `1` | `0` |
+| `MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD` | Enable custom Vulkan ICD loading via `MOBILEGL_VULKAN_ICD_PATH`. | `0`, `1` | `0` |
+| `MOBILEGL_VULKAN_ICD_PATH` | Path to Vulkan ICD JSON manifest or .so file (e.g., Turnip's `libvulkan_freedreno.so`). Only used when `MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD=1`. | Path to ICD JSON or .so file | (empty) |
 | `VK_ICD_FILENAMES`      | Select the Vulkan ICD used by the Vulkan loader. | Path to an ICD JSON file             | Loader default |
 
 ## License

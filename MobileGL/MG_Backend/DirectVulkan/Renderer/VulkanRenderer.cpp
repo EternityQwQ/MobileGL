@@ -25,6 +25,7 @@
 #include "MG_Util/Metrics/TextureMetrics.h"
 #include <Config.h>
 #include <algorithm>
+#include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <vulkan/utility/vk_format_utils.h>
@@ -10820,6 +10821,35 @@ void main() {
     }
 
     void VulkanRenderer::CreateInstance() {
+        // Check for custom Vulkan ICD path (MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD=1 and MOBILEGL_VULKAN_ICD_PATH set)
+        // This must be done before vkCreateInstance so the Vulkan loader picks up the ICD.
+#if !defined(_WIN32)
+        const char* enableCustomIcd = std::getenv("MOBILEGL_ENABLE_CUSTOM_VULKAN_ICD");
+        const char* icdPath = std::getenv("MOBILEGL_VULKAN_ICD_PATH");
+        if (enableCustomIcd && enableCustomIcd[0] && icdPath && icdPath[0]) {
+            // Use truthy check: non-empty, not "0", not "false" (case-insensitive)
+            String enableStr(enableCustomIcd);
+            if (!enableStr.empty() && enableStr != "0") {
+                String lowered = enableStr;
+                std::transform(lowered.begin(), lowered.end(), lowered.begin(),
+                               [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+                if (lowered != "false") {
+                    // Set VK_ICD_FILENAMES for the Vulkan loader to discover the custom ICD
+                    // If path ends with .so, try to find co-located .json manifest
+                    String icdPathStr(icdPath);
+                    String finalPath = icdPathStr;
+                    if (icdPathStr.size() >= 3 && icdPathStr.substr(icdPathStr.size() - 3) == ".so") {
+                        // Try to find co-located JSON manifest
+                        String jsonPath = icdPathStr.substr(0, icdPathStr.size() - 3) + ".json";
+                        finalPath = jsonPath;
+                    }
+                    setenv("VK_ICD_FILENAMES", finalPath.c_str(), 1);
+                    MGLOG_I("VulkanRenderer: Set VK_ICD_FILENAMES=%s", finalPath.c_str());
+                }
+            }
+        }
+#endif
+
         m_extensions = EnumerateInstanceExtensions();
         MGLOG_I("Got %d Vulkan instance extensions: ", m_extensions.size());
         for (auto& extension : m_extensions) {
